@@ -9,6 +9,10 @@ body{
     align-items: center;
     justify-content: center;
     flex-direction: column;
+    width: 100%;
+}
+.input{
+    width: 100%;
 }
 .h1{
     position: absolute;

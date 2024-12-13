@@ -1,15 +1,16 @@
 import axios from "axios";
+
 export const mp3 = async (url) => {
-    if (!url) return ["data incompleat", null];
-  
-    const result = [null, null];
-    await axios
-      .get(`localhost:3008/ytverter?url=${url}`)
-      .then((data) => {
-        result[1] = data.data;
-      })
-      .catch((err) => {
-        result[0] = err;
-      });
-    return result;
-  };
+  if (!url) {
+    return { error: "Data incomplete", data: null };
+  }
+
+  try {
+    const response = await axios.get(`http://localhost:3008/ytverter`, {
+      params: { url },
+    });
+    return { error: null, data: response.data };
+  } catch (err) {
+    return { error: err.message || "An error occurred", data: null };
+  }
+};
