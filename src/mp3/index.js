@@ -4,25 +4,41 @@ import { useState, useRef, useEffect } from 'react';
 
 export function MP3() {
   const in1 = useRef(null);
-  const [messages, setMessages] = useState("");
   const [status, setStatus] = useState('');
-  const url = in1.current.value;
+  const [downloadStatus, setDownloadStatus] = useState('idle'); // idle, inProgress, completed
+  const [message, setMessage] = useState('');
+  useEffect(() => {
+    const eventSource = new EventSource('http://localhost:3008/ytverter');
 
-  const eventSource = new EventSource(`http://localhost:3008/mp3?url=${url}`);
+    eventSource.onmessage = (event) => {
+      const data = event.data.trim();
+      console.log('Message reçu:', data);
+      setMessage(data);
 
-  eventSource.onmessage = (event) => {
-      console.log('Message reçu:', event.data);
-      if (event.data.includes('Téléchargement disponible')) {
-          alert('La conversion est terminée. Le téléchargement va commencer.');
+      if (data.includes('Conversion en cours')) {
+        setDownloadStatus('inProgress');
+      } else if (data.includes('Téléchargement disponible')) {
+        setDownloadStatus('completed');
+        alert('La conversion est terminée. Vous pouvez télécharger le fichier.');
+        eventSource.close();
+      } else if (data.includes('Erreur')) {
+        setDownloadStatus('error');
       }
-  };
-  
-  eventSource.onerror = () => {
+    };
+
+    eventSource.onerror = () => {
       console.error('Erreur lors de la connexion au serveur.');
+      setDownloadStatus('error');
       eventSource.close();
-  };
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
   
   const handleDownload = async () => {
+    const url=in1.current.value
     if (!url) {
       setStatus('Please enter a valid URL.');
       return;
@@ -37,7 +53,10 @@ export function MP3() {
       setStatus('Download failed. Please try again.');
     }
   };
+const vider=(e)=>{
+  setStatus('')
 
+}
   return (
     <>
       <h1 className={style.h1}>Bienvenue Mp3 Download</h1>
@@ -47,12 +66,12 @@ export function MP3() {
           className={style.input}
           ref={in1}
           placeholder="Enter the video URL"
-          
+          onChange={vider}
         />
-        <button onClick={handleDownload}>Download</button>
-        <p>{status}</p>
+        <button onClick={ handleDownload}>Download</button>
+        { <p>{downloadStatus}</p> }
         <div>
-          <h3>{messages}</h3>
+          <h3></h3>
         </div>
         <select>
           <option selected hidden>selectionner la format du video</option>
