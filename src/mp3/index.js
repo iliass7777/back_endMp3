@@ -5,45 +5,6 @@ import { useState, useRef, useEffect } from 'react';
 export function MP3() {
   const in1 = useRef(null);
   const [status, setStatus] = useState('');
-  const [downloadStatus, setDownloadStatus] = useState('idle'); // idle, inProgress, completed, error
-  const [progress, setProgress] = useState(0); // Progress percentage
-  const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    const eventSource = new EventSource('http://localhost:3008/ytverter');
-
-    eventSource.onmessage = (event) => {
-        console.log('Message reçu:', event.data);
-
-        if (event.data.includes('Conversion démarrée')) {
-            setDownloadStatus('inProgress');
-        } else if (event.data.includes('Progression:')) {
-            const progressMatch = event.data.match(/Progression: (\d+)%/);
-            if (progressMatch) {
-                setProgress(Number(progressMatch[1])); // Met à jour la progression
-            }
-        } else if (event.data.includes('Téléchargement disponible')) {
-            setDownloadStatus('completed');
-            alert('La conversion est terminée. Vous pouvez télécharger le fichier.');
-            eventSource.close();
-        } else if (event.data.includes('Erreur')) {
-            setDownloadStatus('error');
-            setMessage(event.data);
-        }
-    };
-
-    eventSource.onerror = () => {
-        console.error('Erreur de connexion au serveur.');
-        setDownloadStatus('error');
-        eventSource.close();
-    };
-
-    return () => {
-        eventSource.close();
-    };
-}, []);
-
-
   const handleDownload = async () => {
     const url = in1.current.value;
     if (!url) {
@@ -53,8 +14,14 @@ export function MP3() {
 
     try {
       console.log('Downloading MP3 from:', url);
-      await mp3(url); // Assuming `mp3` is a function that triggers the conversion
       setStatus('Conversion initiée. Veuillez attendre...');
+      const {data}=await mp3(url); // Assuming `mp3` is a function that triggers the conversion
+      const download=document.createElement("a");
+      download.href="http://localhost:3008/ytverter/"+data
+      download.download="download.mp3";
+      download.click();
+      console.log(download)
+      setStatus('telechargement terminer');
     } catch (error) {
       console.error('Error during download:', error);
       setStatus('Download failed. Please try again.');
@@ -63,7 +30,6 @@ export function MP3() {
 
   const vider = () => {
     setStatus('');
-    setMessage('');
   };
 
   return (
@@ -78,11 +44,8 @@ export function MP3() {
           onChange={vider}
         />
         <button onClick={handleDownload}>Convertir</button>
-        {downloadStatus === 'inProgress' && <p>Avancement : {progress}%</p>}
-        {downloadStatus === 'completed' && <p>Téléchargement terminé !</p>}
-        {downloadStatus === 'error' && <p>{message}</p>}
         <div>
-          <h3>{message}</h3>
+          <h3>{status}</h3>
         </div>
         <select>
           <option selected hidden>Selectionner le format de la vidéo</option>
