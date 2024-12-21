@@ -22,11 +22,11 @@
     color: red;
 } */
 :root {
-    --primary-color: #4caf50;
+    --primary-color: #FF3241;
     --secondary-color: #f4f4f4;
     --text-color: #333;
     --error-color: #e53935;
-    --button-hover-color: #45a049;
+    --button-hover-color: #e53935;
   }
   
   body {
